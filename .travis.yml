@@ -1,0 +1,27 @@
+sudo: require
+services:
+    - docker
+env:
+    global:
+        - SHA=$(git rev-parse HEAD) #needed for deploy script to tag images correctly
+        - CLOUDSDK_CORE_DISABLE_PROMPTS=1 #make sure google cli doesn't show us any yes/no prompts during the build
+before_install:
+    - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
+    - curl https://sdk.cloud.google.com | bash > /dev/null;
+    - source $HOME/google-cloud-sdk/path.bash.inc #we need to modify our shell with this config
+    - gcloud components update kubectl #update kubectl
+    - gcloud auth activate-service-account --key-file service-account.json #provide a set of credentials throughh a file
+    - gcloud config set project udemy-multi-k8s-279304
+    - gcloud config set compute/zone us-central1-a
+    - gcloud container clusters get-credentials multi-cluster
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker build -t imoisejevs/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run imoisejevs/react-test npm test -- --coverage
+
+deploy:
+    provider: script #telling travis to use the script file
+    script: bash ./deploy.sh #specify which script
+    on:
+        branch: master #only want to deploy if we're pushing to master
