@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: worker-deployment
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            component: worker
+    template:
+        metadata:
+            labels:
+                component: worker
+        spec:
+            containers:
+                - name: worker
+                  image: stephengrider/multi-worker
+                  env: #these are the environmental variables that we're passing in
+                      - name: REDIS_HOST #telling our worker how to connect to redis inside of the cluster
+                        value: redis-cluster-ip-service #through the ip service that we defined for it
+                      - name: REDIS_PORT
+                        value: "6379" #matches one in redit file
+# because nothing is going INTO the worker, it does NOT need a service or a port

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: server-deployment
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            component: server #could be anything eg partOfApp: whatever
+    template:
+        metadata:
+            labels:
+                component: server #must match up with the spec above
+        spec:
+            containers:
+                - name: server
+                  image: stephengrider/multi-server
+                  ports:
+                      - containerPort: 5000
+                  env:
+                      - name: REDIS_HOST
+                        value: redis-cluster-ip-service
+                      - name: REDIS_PORT
+                        value: "6379"
+                      - name: PGUSER
+                        value: postgres
+                      - name: PGHOST
+                        value: postgres-cluster-ip-service
+                      - name: PGPORT
+                        value: "5432"
+                      - name: PGDATABASE
+                        value: postgres
+                      - name: PGPASSWORD #this doesn't have to match our secret name, this is related to the image itself
+                        valueFrom:
+                            secretKeyRef:
+                                name: pgpassword
+                                key: PGPASSWORD #we need to point out the key value pair we shoved into the secret (coz secret can store many pairs)
+                                # NOTE the key above could have been anything else - that's what we chose. But the name is demanded by the image

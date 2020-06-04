@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: postgres-deployment
+spec:
+    replicas: 1  # with postgres in particular since it's going to have an external volume you shouldn't have more than one accessing it simult.
+    selector:
+        matchLabels:
+            component: postgres
+    template:
+        metadata:
+            labels:
+                component: postgres
+        spec:
+            volumes: #tells k8s we need some form of storage that meets the req we laid out in database-persistent-volume-claim
+                - name: postgres-storage
+                  persistentVolumeClaim:
+                      claimName: database-persistent-volume-claim
+            containers:
+                - name: postgres
+                  image: postgres
+                  ports:
+                      - containerPort: 5432
+                  volumeMounts:
+                      - name: postgres-storage #needs to be same name as in "volumes"
+                        mountPath: /var/lib/postgresql/data #this is path to the data that we actually want to backup on the volume
+                        subPath: postgres #specific to postgres
+                  env:
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: pgpassword #name of secret
+                                key: PGPASSWORD #key inside of secret

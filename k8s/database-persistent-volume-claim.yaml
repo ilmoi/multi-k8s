@@ -1,0 +1,11 @@
+# this file only tells k8s that we want to find stoarge with below options. It's not yet storage itself
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: database-persistent-volume-claim
+spec:
+    accessModes:
+        - ReadWriteOnce
+    resources:
+        requests:
+            storage: 2Gi

@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: ingress-service
+    annotations:
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/rewrite-target: /$1 #this ensures if we catch a /api requests, we remove /api from the request
+spec:
+    rules:
+        - http:
+            paths:
+                - path: /?(.*) #if someone lands on any route other than api below, we want to route them to the front end
+                  backend:
+                      serviceName: client-cluster-ip-service
+                      servicePort: 3000
+                - path: /api/?(.*) #if someone lands on /api/ we want to send them to the backend service
+                  backend:
+                      serviceName: server-cluster-ip-service
+                      servicePort: 5000
